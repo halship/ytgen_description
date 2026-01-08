@@ -26,7 +26,10 @@
 	});
 
 	function addTag() {
-		tags = [...tags, { id: tags.length, name: '' }];
+		tags = [
+			...tags,
+			{ id: tags.length > 0 ? Math.max(...tags.map((tag) => tag.id)) + 1 : 0, name: '' }
+		];
 	}
 
 	function removeTag(id: number) {
@@ -34,7 +37,14 @@
 	}
 
 	function addUsedTool() {
-		usedTools = [...usedTools, { id: usedTools.length, name: '', url: '' }];
+		usedTools = [
+			...usedTools,
+			{
+				id: usedTools.length > 0 ? Math.max(...usedTools.map((tool) => tool.id)) + 1 : 0,
+				name: '',
+				url: ''
+			}
+		];
 	}
 
 	function removeUsedTool(id: number) {
@@ -59,6 +69,50 @@
 
 	function removeUsedMaterial(id: number) {
 		usedMaterials = usedMaterials.filter((material) => material.id !== id);
+	}
+
+	function exportToJson() {
+		const json = {
+			tags: tags.map((tag) => tag.name),
+			summary,
+			playedGame: playedGame.trim() !== '' ? playedGame : null,
+			usedTools: usedTools.map((tool) => ({ name: tool.name, url: tool.url })),
+			usedMaterials: usedMaterials.map((material) => ({ name: material.name, url: material.url }))
+		};
+		const jsonString = JSON.stringify(json, null, 2);
+		const blob = new Blob([jsonString], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'youtube_description.json';
+		a.click();
+	}
+
+	function importFromJson(e: Event) {
+		const target = e.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (!file) return;
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			const jsonString = e.target?.result as string;
+			const json = JSON.parse(jsonString);
+			tags = json.tags.map((tag: string, index: number) => ({ id: index, name: tag }));
+			summary = json.summary;
+			playedGame = json.playedGame;
+			usedTools = json.usedTools.map((tool: { name: string; url: string }, index: number) => ({
+				id: index,
+				name: tool.name,
+				url: tool.url
+			}));
+			usedMaterials = json.usedMaterials.map(
+				(material: { name: string; url: string }, index: number) => ({
+					id: index,
+					name: material.name,
+					url: material.url
+				})
+			);
+		};
+		reader.readAsText(file);
 	}
 </script>
 
@@ -160,6 +214,22 @@
 					{copied ? 'コピーしました！' : '一括コピー'}
 				</button>
 			</div>
+		</div>
+	</section>
+
+	<hr />
+
+	<section class="section">
+		<div class="import-export-container">
+			<button class="btn btn-primary" onclick={exportToJson}>エクスポート</button>
+			<label for="file-input" class="btn btn-secondary">インポート</label>
+			<input
+				id="file-input"
+				type="file"
+				class="file-input"
+				onchange={importFromJson}
+				accept="application/json"
+			/>
 		</div>
 	</section>
 </div>
@@ -419,5 +489,28 @@
 		outline: none;
 		border-color: #4a90e2;
 		box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+	}
+
+	.import-export-container {
+		display: flex;
+		gap: 0.75rem;
+		align-items: center;
+	}
+
+	.file-input {
+		position: absolute;
+		width: 0;
+		height: 0;
+		opacity: 0;
+		overflow: hidden;
+	}
+
+	.btn-secondary {
+		background-color: #95a5a6;
+		color: white;
+	}
+
+	.btn-secondary:hover {
+		background-color: #7f8c8d;
 	}
 </style>
