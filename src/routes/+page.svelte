@@ -4,7 +4,10 @@
 	let tags = $state<Tag[]>([]);
 	let output = $derived.by(() => {
 		const tagsResult = tags.map((tag) => `#${tag.name}`).join(' ');
-		return tagsResult;
+		return [tagsResult, summary]
+			.filter((result) => result.trim() !== '')
+			.join('\n\n')
+			.trim();
 	});
 
 	function addTag() {
@@ -14,6 +17,8 @@
 	function removeTag(id: number) {
 		tags = tags.filter((tag) => tag.id !== id);
 	}
+
+	let summary = $state('');
 
 	let copied = $state(false);
 
@@ -44,6 +49,11 @@
 			{/each}
 			<button class="btn btn-primary" onclick={addTag}>タグ追加</button>
 		</div>
+	</section>
+
+	<section class="section">
+		<h2>概要入力欄</h2>
+		<textarea rows={10} cols={80} bind:value={summary} placeholder="概要を入力"></textarea>
 	</section>
 
 	<section class="section">
