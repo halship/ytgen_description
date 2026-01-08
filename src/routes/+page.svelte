@@ -2,9 +2,13 @@
 	import type { Tag } from '$lib/types';
 
 	let tags = $state<Tag[]>([]);
+	let summary = $state('');
+	let copied = $state(false);
+	let playedGame = $state('');
 	let output = $derived.by(() => {
 		const tagsResult = tags.map((tag) => `#${tag.name}`).join(' ');
-		return [tagsResult, summary]
+		const playedGameResult = playedGame.trim() !== '' ? `【プレイするゲーム】\n${playedGame}` : '';
+		return [tagsResult, summary, playedGameResult]
 			.filter((result) => result.trim() !== '')
 			.join('\n\n')
 			.trim();
@@ -17,10 +21,6 @@
 	function removeTag(id: number) {
 		tags = tags.filter((tag) => tag.id !== id);
 	}
-
-	let summary = $state('');
-
-	let copied = $state(false);
 
 	async function copyToClipboard() {
 		try {
@@ -43,7 +43,7 @@
 		<div class="tag-input-container">
 			{#each tags as tag (tag.id)}
 				<div class="tag-row">
-					<input type="text" bind:value={tag.name} placeholder="タグ名を入力" />
+					<input type="text" class="tag-input" bind:value={tag.name} placeholder="タグ名を入力" />
 					<button class="btn btn-danger" onclick={() => removeTag(tag.id)}>削除</button>
 				</div>
 			{/each}
@@ -53,13 +53,31 @@
 
 	<section class="section">
 		<h2>概要入力欄</h2>
-		<textarea rows={10} cols={80} bind:value={summary} placeholder="概要を入力"></textarea>
+		<textarea
+			class="summary-textarea"
+			rows={10}
+			cols={80}
+			bind:value={summary}
+			placeholder="概要を入力"
+		></textarea>
 	</section>
+
+	<section class="section">
+		<h2>プレイするゲーム入力欄</h2>
+		<input
+			type="text"
+			class="played-game-input"
+			bind:value={playedGame}
+			placeholder="プレイしたゲームを入力"
+		/>
+	</section>
+
+	<hr />
 
 	<section class="section">
 		<h2>出力結果</h2>
 		<div class="output-container">
-			<textarea rows={10} cols={80} readonly>{output}</textarea>
+			<textarea class="output-textarea" rows={10} cols={80} readonly>{output}</textarea>
 			<div class="output-footer">
 				<button class="btn btn-copy" onclick={copyToClipboard}>
 					{copied ? 'コピーしました！' : '一括コピー'}
@@ -91,6 +109,12 @@
 		color: #333;
 	}
 
+	hr {
+		margin: 2rem 0;
+		border: 0;
+		border-top: 1px solid #ddd;
+	}
+
 	.section {
 		margin-bottom: 2.5rem;
 	}
@@ -108,7 +132,7 @@
 		align-items: center;
 	}
 
-	input[type='text'] {
+	.tag-input {
 		flex: 1;
 		padding: 0.75rem;
 		border: 1px solid #ddd;
@@ -120,7 +144,7 @@
 		box-sizing: border-box;
 	}
 
-	input[type='text']:focus {
+	.tag-input:focus {
 		outline: none;
 		border-color: #4a90e2;
 		box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
@@ -184,21 +208,49 @@
 		background-color: #229954;
 	}
 
-	textarea {
+	.summary-textarea {
 		width: 100%;
 		padding: 1rem;
 		border: 1px solid #ddd;
 		border-radius: 4px;
 		font-size: 1rem;
-		background-color: #f9f9f9;
 		resize: vertical;
 		transition: border-color 0.2s;
 		box-sizing: border-box;
 	}
 
-	textarea:focus {
+	.summary-textarea:focus {
 		outline: none;
 		border-color: #4a90e2;
 		background-color: #fff;
+		box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+	}
+
+	.played-game-input {
+		width: 100%;
+		padding: 0.75rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 1rem;
+		transition: border-color 0.2s;
+		box-sizing: border-box;
+	}
+
+	.played-game-input:focus {
+		outline: none;
+		border-color: #4a90e2;
+		box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+	}
+
+	.output-textarea {
+		width: 100%;
+		padding: 1rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 1rem;
+		resize: vertical;
+		transition: border-color 0.2s;
+		box-sizing: border-box;
+		background-color: #f9f9f9;
 	}
 </style>
