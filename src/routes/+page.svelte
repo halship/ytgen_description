@@ -1,14 +1,25 @@
 <script lang="ts">
-	import type { Tag } from '$lib/types';
+	import type { Tag, UsedTool, UsedMaterial } from '$lib/types';
 
 	let tags = $state<Tag[]>([]);
 	let summary = $state('');
 	let copied = $state(false);
 	let playedGame = $state('');
+	let usedTools = $state<UsedTool[]>([]);
+	let usedMaterials = $state<UsedMaterial[]>([]);
 	let output = $derived.by(() => {
 		const tagsResult = tags.map((tag) => `#${tag.name}`).join(' ');
 		const playedGameResult = playedGame.trim() !== '' ? `【プレイするゲーム】\n${playedGame}` : '';
-		return [tagsResult, summary, playedGameResult]
+		const usedToolsResult =
+			usedTools.length > 0
+				? `【使用したツール】\n${usedTools.map((tool) => `・${tool.name}\n  ${tool.url}`).join('\n')}`
+				: '';
+		const usedMaterialsResult =
+			usedMaterials.length > 0
+				? `【使用した素材】\n${usedMaterials.map((material) => `・${material.name}\n  ${material.url}`).join('\n')}`
+				: '';
+
+		return [tagsResult, summary, playedGameResult, usedToolsResult, usedMaterialsResult]
 			.filter((result) => result.trim() !== '')
 			.join('\n\n')
 			.trim();
@@ -22,6 +33,14 @@
 		tags = tags.filter((tag) => tag.id !== id);
 	}
 
+	function addUsedTool() {
+		usedTools = [...usedTools, { id: usedTools.length, name: '', url: '' }];
+	}
+
+	function removeUsedTool(id: number) {
+		usedTools = usedTools.filter((tool) => tool.id !== id);
+	}
+
 	async function copyToClipboard() {
 		try {
 			await navigator.clipboard.writeText(output);
@@ -32,6 +51,14 @@
 		} catch (err) {
 			console.error('コピーに失敗しました:', err);
 		}
+	}
+
+	function addUsedMaterial() {
+		usedMaterials = [...usedMaterials, { id: usedMaterials.length, name: '', url: '' }];
+	}
+
+	function removeUsedMaterial(id: number) {
+		usedMaterials = usedMaterials.filter((material) => material.id !== id);
 	}
 </script>
 
@@ -70,6 +97,56 @@
 			bind:value={playedGame}
 			placeholder="プレイしたゲームを入力"
 		/>
+	</section>
+
+	<section class="section">
+		<h2>使用したツール入力欄</h2>
+		<div class="used-tool-input-container">
+			{#each usedTools as usedTool (usedTool.id)}
+				<div class="used-tool-row">
+					<input
+						type="text"
+						class="used-tool-input"
+						bind:value={usedTool.name}
+						placeholder="使用したツールを入力"
+					/>
+					<input
+						type="text"
+						class="used-tool-url-input"
+						bind:value={usedTool.url}
+						placeholder="使用したツールのURLを入力"
+					/>
+					<button class="btn btn-danger" onclick={() => removeUsedTool(usedTool.id)}>削除</button>
+				</div>
+			{/each}
+			<button class="btn btn-primary" onclick={addUsedTool}>使用したツール追加</button>
+		</div>
+	</section>
+
+	<section class="section">
+		<h2>使用した素材入力欄</h2>
+		<div class="used-material-input-container">
+			{#each usedMaterials as usedMaterial (usedMaterial.id)}
+				<div class="used-material-row">
+					<input
+						type="text"
+						class="used-material-input"
+						bind:value={usedMaterial.name}
+						placeholder="使用した素材を入力"
+					/>
+					<input
+						type="text"
+						class="used-material-url-input"
+						bind:value={usedMaterial.url}
+						placeholder="使用した素材のURLを入力"
+					/>
+					<button class="btn btn-danger" onclick={() => removeUsedMaterial(usedMaterial.id)}
+						>削除</button
+					>
+				</div>
+			{/each}
+			<button class="btn btn-primary" onclick={addUsedMaterial}>使用した素材追加</button>
+		</div>
 	</section>
 
 	<hr />
@@ -252,5 +329,95 @@
 		transition: border-color 0.2s;
 		box-sizing: border-box;
 		background-color: #f9f9f9;
+	}
+
+	.used-tool-input-container {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.used-tool-row {
+		display: flex;
+		flex-direction: row;
+		gap: 0.75rem;
+		align-items: center;
+	}
+
+	.used-tool-input {
+		flex: 1;
+		padding: 0.75rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 1rem;
+		transition: border-color 0.2s;
+		box-sizing: border-box;
+	}
+
+	.used-tool-input:focus {
+		outline: none;
+		border-color: #4a90e2;
+		box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+	}
+
+	.used-tool-url-input {
+		flex: 1;
+		padding: 0.75rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 1rem;
+		transition: border-color 0.2s;
+		box-sizing: border-box;
+	}
+
+	.used-tool-url-input:focus {
+		outline: none;
+		border-color: #4a90e2;
+		box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+	}
+
+	.used-material-input-container {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.used-material-row {
+		display: flex;
+		flex-direction: row;
+		gap: 0.75rem;
+		align-items: center;
+	}
+
+	.used-material-input {
+		flex: 1;
+		padding: 0.75rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 1rem;
+		transition: border-color 0.2s;
+		box-sizing: border-box;
+	}
+
+	.used-material-input:focus {
+		outline: none;
+		border-color: #4a90e2;
+		box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+	}
+
+	.used-material-url-input {
+		flex: 1;
+		padding: 0.75rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 1rem;
+		transition: border-color 0.2s;
+		box-sizing: border-box;
+	}
+
+	.used-material-url-input:focus {
+		outline: none;
+		border-color: #4a90e2;
+		box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 	}
 </style>
